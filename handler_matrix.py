@@ -89,6 +89,14 @@ def handle(data):
     Ожидает: {"date": "{$datarojd}"}
     Возвращает JSON с флагом валидности даты и (если дата верна) всеми ключами матрицы.
     """
+    # Salebot может передать params как JSON-строку, а не как готовый словарь —
+    # обрабатываем оба варианта.
+    if isinstance(data, str):
+        try:
+            data = json.loads(data)
+        except (json.JSONDecodeError, TypeError):
+            return json.dumps({"date_valid": False, "date_reason": "не удалось разобрать входные параметры"}, ensure_ascii=False)
+
     raw_date = data.get("date", "")
     result = validate_date(raw_date)
 
@@ -99,6 +107,10 @@ def handle(data):
     return json.dumps(result, ensure_ascii=False)
 
 
+# --- локальная проверка (не выполняется на сервере Salebot, просто для самопроверки) ---
+if __name__ == "__main__":
+    test = handle({"date": "29.12.1983"})
+    print(test)
 # --- локальная проверка (не выполняется на сервере Salebot, просто для самопроверки) ---
 if __name__ == "__main__":
     test = handle({"date": "29.12.1983"})
