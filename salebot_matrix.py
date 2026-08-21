@@ -732,3 +732,6 @@ def handle(data):
 
 if __name__ == "__main__":
     print(handle({"date": "13.02.1988"}))
+
+if __name__ == "__main__":
+    print(handle({"date": "13.02.1988"}))
