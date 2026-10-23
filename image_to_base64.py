@@ -1,7 +1,11 @@
 import base64
-import requests
+import json
+import urllib.request
 
 def handle(params):
+    if isinstance(params, str):
+        params = json.loads(params)
+
     image_url = params.get("image_url")
 
     if not image_url:
@@ -11,10 +15,10 @@ def handle(params):
         }
 
     try:
-        response = requests.get(image_url, timeout=20)
-        response.raise_for_status()
+        with urllib.request.urlopen(image_url, timeout=20) as response:
+            image_data = response.read()
 
-        image_base64 = base64.b64encode(response.content).decode("utf-8")
+        image_base64 = base64.b64encode(image_data).decode("utf-8")
 
         return {
             "success": True,
