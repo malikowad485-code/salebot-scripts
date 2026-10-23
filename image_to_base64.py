@@ -1,7 +1,7 @@
 import base64
 import requests
 
-def run(params):
+def handle(params):
     image_url = params.get("image_url")
 
     if not image_url:
