@@ -208,10 +208,10 @@ def calculate_matrix(day, month, year):
         info = PALMS_DATA.get(val)
         if info:
             palms_points_list.append(
-                f"Ключ {val} ({info['trauma']}):\n"
-                f"Зона наложения ладони: {info['location']}.\n"
-                f"Соматическое микродействие: {info['somatic']}\n"
-                f"Текст смыслового растождествления: «{info['meditation']}»"
+                f"**Ключ {val} ({info['trauma']}):**\n\n"
+                f"* **Зона наложения ладони:** {info['location']}.\n\n"
+                f"* **Соматическое микродействие:** {info['somatic']}\n\n"
+                f"* **Текст смыслового растождествления:** «{info['meditation']}»"
             )
     palms_points_block = "\n\n".join(palms_points_list)
 
