@@ -158,7 +158,7 @@ def sum_digits(number):
     return sum(int(digit) for digit in str(number))
 
 
-def calculate_matrix(day, month, year):
+def calculate_matrix(day, month, year, branch=None):
     """Считает все ключевые точки матрицы, 9 сценариев, Архетипы Уровня 1, типы Масок и PALMS 2.0."""
     a = reduce_value(day)
     b = reduce_value(month)
@@ -258,13 +258,104 @@ def calculate_matrix(day, month, year):
     res.update(arch_names)
     res.update(mask_types)
     res.update(traumas)
+
+    branch_ctx = build_branch_context(branch, res)
+    if branch_ctx:
+        res.update(branch_ctx)
     return res
+
+
+def build_branch_context(branch_raw, res):
+    """Фиксирует точные ключи, Маски, Тень и отфильтрованный matrix_data_block для выбранной ветки (1-4)."""
+    if branch_raw is None or str(branch_raw).strip() == "":
+        return {}
+    match = re.search(r"[1-4]", str(branch_raw))
+    if not match:
+        return {}
+    code = match.group(0)
+
+    branches = {
+        "1": {
+            "branch_name": "Отношения, любовь и семья",
+            "p_name": "Любовный сценарий",
+            "p_k1": res["d"], "p_k2": res["a"],
+            "p_k1_arch": res["d_arch"], "p_k2_arch": res["a_arch"],
+            "p_mask": res["z"], "p_mask_type": res["z_type"],
+            "h_name": "Исцеляющий любовный сценарий",
+            "h_k1": res["x"], "h_k2": res["k"],
+            "h_mask": res["v"], "h_mask_type": res["v_type"],
+            "s_num": "1", "s_key": res["R1"], "s_trauma": res["R1_trauma"],
+            "s_scope": "отношения и коммуникации",
+        },
+        "2": {
+            "branch_name": "Деньги, доходы, долги и финансовый поток",
+            "p_name": "Денежный сценарий",
+            "p_k1": res["d"], "p_k2": res["k"],
+            "p_k1_arch": res["d_arch"], "p_k2_arch": res["k_arch"],
+            "p_mask": res["e"], "p_mask_type": res["e_type"],
+            "h_name": "Исцеляющий денежный сценарий",
+            "h_k1": res["k"], "h_k2": res["b"],
+            "h_mask": res["l"], "h_mask_type": res["l_type"],
+            "s_num": "2", "s_key": res["R2"], "s_trauma": res["R2_trauma"],
+            "s_scope": "деньги и финансовый поток",
+        },
+        "3": {
+            "branch_name": "Таланты, работа, карьера и проявленность",
+            "p_name": "Сценарий таланта",
+            "p_k1": res["k"], "p_k2": res["c"],
+            "p_k1_arch": res["k_arch"], "p_k2_arch": res["c_arch"],
+            "p_mask": res["n"], "p_mask_type": res["n_type"],
+            "h_name": "Сценарий реализации таланта",
+            "h_k1": res["d"], "h_k2": res["c"],
+            "h_mask": res["m"], "h_mask_type": res["m_type"],
+            "s_num": "2", "s_key": res["R2"], "s_trauma": res["R2_trauma"],
+            "s_scope": "таланты, работа и проявленность",
+        },
+        "4": {
+            "branch_name": "Предназначение, смысл жизни и свой путь",
+            "p_name": "Сценарий кармической задачи",
+            "p_k1": res["x"], "p_k2": res["a"],
+            "p_k1_arch": res["x_arch"], "p_k2_arch": res["a_arch"],
+            "p_mask": res["f"], "p_mask_type": res["f_type"],
+            "h_name": "Сценарий реализации кармической задачи",
+            "h_k1": res["x"], "h_k2": res["b"],
+            "h_mask": res["h"], "h_mask_type": res["h_type"],
+            "s_num": "3", "s_key": res["R3"], "s_trauma": res["R3_trauma"],
+            "s_scope": "предназначение и смысл жизни",
+        },
+    }
+
+    b = branches[code]
+    s_loc = PALMS_DATA[b["s_key"]]["location"]
+    r4_loc = PALMS_DATA[res["R4"]]["location"]
+    filtered_matrix_data = (
+        f"ДАННЫЕ РАССЧИТАННОЙ ТЕНЕВОЙ МАТРИЦЫ КЛИЕНТА (ВЕДУЩАЯ ВЕТКА: {b['branch_name']}):\n"
+        f"1. Архитектура потенциала Души (Архетипы):\n"
+        f"Центр Личности: {res['d']} ключ ({res['d_arch']})\n"
+        f"Центр Родовых программ: {res['k']} ключ ({res['k_arch']})\n"
+        f"Центр Предназначения: {res['x']} ключ ({res['x_arch']})\n"
+        f"Ключ реализации таланта: {res['c']} ключ ({res['c_arch']})\n"
+        f"Ключ реализации предназначения: {res['b']} ключ ({res['b_arch']})\n"
+        f"2. Генеральная защита:\n"
+        f"Альтер эго: {res['a']} ключ ({res['a_arch']})\n"
+        f"3. Активные сценарии выбранной ветки и Линия сердца (Маски без арканов):\n"
+        f"{b['p_name']}: связка {b['p_k1']} и {b['p_k2']}, Маска: {b['p_mask']} ключ ({b['p_mask_type']})\n"
+        f"{b['h_name']}: связка {b['h_k1']} и {b['h_k2']}, Маска: {b['h_mask']} ключ ({b['h_mask_type']})\n"
+        f"Линия сердца (вектор взросления от {res['d']} к {res['x']}): Маска: {res['y']} ключ ({res['y_type']})\n"
+        f"4. Программы выживания выбранной ветки (Тень и Типаж, без арканов):\n"
+        f"Активная {b['s_num']} Тень ({b['s_scope']}): {b['s_key']} ключ, {b['s_trauma']}, зона в теле: {s_loc}\n"
+        f"Типаж личности (базовая кармическая травма): {res['R4']} ключ, {res['R4_trauma']}, зона в теле: {r4_loc}"
+    )
+    b["branch_code"] = code
+    b["s_location"] = s_loc
+    b["matrix_data_block"] = filtered_matrix_data
+    return b
 
 
 def handle(data):
     """
     Точка входа для Salebot code_executor.
-    Ожидает: {"date": "{$datarojd}"}
+    Ожидает: {"date": "{$datarojd}"} (и опционально "branch": "1"|"2"|"3"|"4").
     Возвращает JSON со всеми ключами, Архетипами Уровня 1, типами Масок, Травмами, PALMS 2.0 и matrix_data_block.
     """
     if isinstance(data, str):
@@ -274,10 +365,11 @@ def handle(data):
             return json.dumps({"date_valid": False, "date_reason": "не удалось разобрать входные параметры"}, ensure_ascii=False)
 
     raw_date = data.get("date", "")
+    raw_branch = data.get("branch", "")
     result = validate_date(raw_date)
 
     if result.get("date_valid"):
-        matrix = calculate_matrix(result["day"], result["month"], result["year"])
+        matrix = calculate_matrix(result["day"], result["month"], result["year"], branch=raw_branch)
         result.update(matrix)
 
     return json.dumps(result, ensure_ascii=False)
